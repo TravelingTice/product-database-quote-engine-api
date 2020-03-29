@@ -36,7 +36,7 @@ app.use(cookieParser());
 app.use(cors());
 
 // routes middleware
-app.use('/api', collectionRoutes);
+app.use(collectionRoutes);
 
 // port
 const port = process.env.PORT || 8000;
