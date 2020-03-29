@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ObjectId } = mongoose.Schema;
 
 const CustomerSchema = new mongoose.Schema({
   name: {
@@ -48,16 +49,17 @@ const CustomerSchema = new mongoose.Schema({
     default: ''
   },
   businessCard: {
-    type: String,
-    default: 'https://pdqe.s3-ap-southeast-1.amazonaws.com/default.jpg'
+    data: Buffer,
+    contentType: String
   },
   notes: {
     type: String,
     default: ''
   },
-  user: {
-    type: String,
-    default: ''
+  addedBy: {
+    type: ObjectId,
+    ref: 'User',
+    required: true
   },
   isDeleted: {
     type: Boolean,
