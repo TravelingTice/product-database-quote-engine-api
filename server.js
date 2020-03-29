@@ -10,6 +10,7 @@ require('dotenv').config();
 
 // bring routes
 const collectionRoutes = require('./routes/collection');
+const customerRoutes = require('./routes/customer');
 
 // initialize express app
 const app = express();
@@ -37,6 +38,7 @@ app.use(cors());
 
 // routes middleware
 app.use(collectionRoutes);
+app.use(customerRoutes);
 
 // port
 const port = process.env.PORT || 8000;

@@ -26,15 +26,22 @@ exports.read = (req, res) => {
 
 exports.create = (req, res) => {
   const { name } = req.body;
-  const collection = new Collection();
+  const collection = new Collection({ ...req.body });
 
-  collection.name = name;
-  collection.slug = slugify(name).toLowerCase();
+  const slug = slugify(name).toLowerCase();
 
-  collection.save((err, result) => {
-    if (err) return res.status(400).json({ error: errorHandler(err) });
+  collection.slug = slug;
 
-    return res.json(result);
+  // check if there is not already one in db
+  Collection.find({ slug, isDeleted: false }).exec((err, collections) => {
+    if (collections.length > 0) return res.status(400).json({ error: 'Collection already exists' });
+
+    // save in db
+    collection.save((err, result) => {
+      if (err) return res.status(400).json({ error: errorHandler(err) });
+  
+      return res.json(result);
+    });
   });
 }
 

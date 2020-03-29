@@ -8,6 +8,7 @@ const CollectionSchema = new mongoose.Schema({
   slug: {
     type: String,
     required: true,
+    unique: true,
     lowercase: true
   },
   isDeleted: {

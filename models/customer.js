@@ -3,7 +3,13 @@ const mongoose = require('mongoose');
 const CustomerSchema = new mongoose.Schema({
   name: {
     type: String,
-    default: ''
+    required: true
+  },
+  slug: {
+    type: String,
+    required: true,
+    lowercase: true,
+    unique: true
   },
   company: {
     type: String,
