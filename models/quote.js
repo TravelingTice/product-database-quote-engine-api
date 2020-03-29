@@ -17,6 +17,6 @@ const QuoteSchema = new mongoose.Schema({
       type: Boolean,
       default: false
   }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Quote', QuoteSchema);
