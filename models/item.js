@@ -96,10 +96,6 @@ const ItemSchema = new mongoose.Schema({
   notes: {
     type: String,
     default: ''
-  },
-  isDeleted: {
-    type: Boolean,
-    default: false
   }
 }, { timestamps: true });
 

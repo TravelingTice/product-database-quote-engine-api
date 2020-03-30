@@ -22,7 +22,7 @@ const CustomerSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    default: ''
+    required: true
   },
   street1: {
     type: String,
@@ -60,10 +60,6 @@ const CustomerSchema = new mongoose.Schema({
     type: ObjectId,
     ref: 'User',
     required: true
-  },
-  isDeleted: {
-    type: Boolean,
-    default: false
   }
 }, { timestamps: true });
 

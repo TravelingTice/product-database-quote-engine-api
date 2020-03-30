@@ -66,7 +66,7 @@ exports.update = (req, res) => {
 exports.remove = (req, res) => {
   const slug = req.params.slug.toLowerCase();
 
-  Collection.findOneAndUpdate({ slug, isDeleted: false }, { $set: { isDeleted: true } }, (err, result) => {
+  Collection.findOneAndRemove({ slug }, (err, result) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     return res.json(result);

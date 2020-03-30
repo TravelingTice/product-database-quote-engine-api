@@ -10,10 +10,6 @@ const CollectionSchema = new mongoose.Schema({
     required: true,
     unique: true,
     lowercase: true
-  },
-  isDeleted: {
-    type: Boolean,
-    default: false
   }
 }, { timestamps: true });
 

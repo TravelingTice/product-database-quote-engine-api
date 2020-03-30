@@ -1,5 +1,4 @@
 const User = require('../models/user');
-const Blog = require('../models/blog');
 const { errorHandler } = require('../helpers/dbErrorHandler');
 const shortId = require('shortid');
 const jwt = require('jsonwebtoken');
@@ -11,87 +10,54 @@ const sgMail = require('@sendgrid/mail');
 // set api key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-exports.preSignup = (req, res) => {
-  const { name, email, password } = req.body;
-
-  // check if user already exists
-  User.findOne({ email: email.toLowerCase() }, (err, user) => {
-    if (user) return res.status(400).json({ error: 'Email is taken' });
-
-    // create a token with user information
-    const token = jwt.sign({ name, email, password }, process.env.JWT_ACCOUNT_ACTIVATION, { expiresIn: '20m' });
-
-    // email the user this token
-    // link to go to activate the account
-    const link = `${process.env.CLIENT_URL}/user/activate/${token}`;
-    // email data
-    const emailData = {
-      from: process.env.EMAIL_FROM,
-      to: email,
-      subject: `Please activate your account - ${process.env.APP_NAME}`,
-      text: `Please activate your account using the following link: \n${link}`,
-      html: `
-        <h2>Dear ${name}, Thank you for signing up on ${process.env.APP_NAME}!</h2>
-        <p>Please use the following link to activate your account:</p>
-        <p><a href="${link}">${link}</a></p>
-        <p>Look forward to having you on the team!</p>
-        <p><strong>- Avinash</strong></p>
-        <p><a href=${process.env.CLIENT_URL}>${process.env.CLIENT_URL}</a></p>
-      `
-    }
-
-    sgMail.send(emailData).then(sent => {
-      res.json({
-        message: `Email has been sent to ${email}. Please check your mail to activate your account!`
-      });
-    });
-  });
-}
-
-// exports.signup = (req, res) => {
+// exports.preSignup = (req, res) => {
 //   const { name, email, password } = req.body;
-  
-//   User.findOne({ email }).exec((err, user) => {
-//     if (user) return res.status(400).json({
-//       error: 'Email is already taken'
-//     });
 
-//     let username = shortId.generate();
-//     let uniqueUsername = username;
-//     let profile = `${process.env.CLIENT_URL}/profile/${uniqueUsername}`;
+//   // check if user already exists
+//   User.findOne({ email: email.toLowerCase() }, (err, user) => {
+//     if (user) return res.status(400).json({ error: 'Email is taken' });
 
-//     let newUser = new User({ name, email, password, profile, username, uniqueUsername });
-//     newUser.save((err, success) => {
-//       // error handling
-//       if (err) return res.status(400).json({ error: err });
+//     // create a token with user information
+//     const token = jwt.sign({ name, email, password }, process.env.JWT_ACCOUNT_ACTIVATION, { expiresIn: '20m' });
 
-//       // success
-//       return res.json({
-//         message: 'Signup success! Please signin.'
-//       })
+//     // email the user this token
+//     // link to go to activate the account
+//     const link = `${process.env.CLIENT_URL}/user/activate/${token}`;
+//     // email data
+//     const emailData = {
+//       from: process.env.EMAIL_FROM,
+//       to: email,
+//       subject: `Please activate your account - ${process.env.APP_NAME}`,
+//       text: `Please activate your account using the following link: \n${link}`,
+//       html: `
+//         <h2>Dear ${name}, Thank you for signing up on ${process.env.APP_NAME}!</h2>
+//         <p>Please use the following link to activate your account:</p>
+//         <p><a href="${link}">${link}</a></p>
+//         <p>Look forward to having you on the team!</p>
+//         <p><strong>- Avinash</strong></p>
+//         <p><a href=${process.env.CLIENT_URL}>${process.env.CLIENT_URL}</a></p>
+//       `
+//     }
+
+//     sgMail.send(emailData).then(sent => {
+//       res.json({
+//         message: `Email has been sent to ${email}. Please check your mail to activate your account!`
+//       });
 //     });
 //   });
 // }
 
 exports.signup = (req, res) => {
-  const { token } = req.body;
-  console.log('TOKEN', token);
+  const { name, email, password } = req.body;
+  
+  User.findOne({ email }).exec((err, user) => {
+    if (user) return res.status(400).json({ error: 'Email is already taken' });
 
-  if (!token) return res.status(400).json({ error: 'No token provided'});
+    let username = shortId.generate();
+    let uniqueUsername = username;
+    let profile = `${process.env.CLIENT_URL}/profile/${uniqueUsername}`;
 
-  // verify token
-  jwt.verify(token, process.env.JWT_ACCOUNT_ACTIVATION, (err, decoded) => {
-    console.log(err);
-    if (err) return res.status(401).json({ error: 'Expired link. Signup again' });
-
-    // get user information from jwt
-    const { name, email, password } = jwt.decode(token);
-
-    const username = shortId.generate();
-    const uniqueUsername = username;
-    const profile = `${process.env.CLIENT_URL}/profile/${uniqueUsername}`;
-
-    const newUser = new User({ name, email, password, profile, username, uniqueUsername });
+    let newUser = new User({ name, email, password, profile, username, uniqueUsername });
     newUser.save((err, success) => {
       // error handling
       if (err) return res.status(400).json({ error: errorHandler(err) });
@@ -103,6 +69,38 @@ exports.signup = (req, res) => {
     });
   });
 }
+
+// SIGN UP if using PRESIGNUP
+// exports.signup = (req, res) => {
+//   const { token } = req.body;
+//   console.log('TOKEN', token);
+
+//   if (!token) return res.status(400).json({ error: 'No token provided'});
+
+//   // verify token
+//   jwt.verify(token, process.env.JWT_ACCOUNT_ACTIVATION, (err, decoded) => {
+//     console.log(err);
+//     if (err) return res.status(401).json({ error: 'Expired link. Signup again' });
+
+//     // get user information from jwt
+//     const { name, email, password } = jwt.decode(token);
+
+//     const username = shortId.generate();
+//     const uniqueUsername = username;
+//     const profile = `${process.env.CLIENT_URL}/profile/${uniqueUsername}`;
+
+//     const newUser = new User({ name, email, password, profile, username, uniqueUsername });
+//     newUser.save((err, success) => {
+//       // error handling
+//       if (err) return res.status(400).json({ error: errorHandler(err) });
+
+//       // success
+//       return res.json({
+//         message: 'Signup success! Please signin.'
+//       });
+//     });
+//   });
+// }
 
 exports.signin = (req, res) => {
   const { email, password } = req.body;
@@ -134,6 +132,7 @@ exports.signin = (req, res) => {
 exports.signout = (req, res) => {
   // clear the cookie
   res.clearCookie('token');
+  
   return res.json({
     message: 'Sign out success'
   });
@@ -147,11 +146,12 @@ exports.requireSignin = expressJwt({
 // middlewares
 exports.authMiddleware = (req, res, next) => {
   const authUserId = req.user._id;
+
   User.findById({ _id: authUserId }).exec((err, user) => {
-    if (err || !user) return res.status(400).json({
-      error: 'User not found'
-    });
+    if (err || !user) return res.status(400).json({ error: 'User not found' });
+
     req.profile = user;
+
     next();
   });
 }
@@ -160,33 +160,13 @@ exports.authMiddleware = (req, res, next) => {
 exports.adminMiddleware = (req, res, next) => {
   const adminUserId = req.user._id;
   User.findById({ _id: adminUserId }).exec((err, user) => {
-    if (err || !user) return res.status(400).json({
-      error: 'User not found'
-    });
+    if (err) return res.status(400).json({ error: errorHandler(err) });
 
-    if (user.role !== 1) return res.status(400).json({
-      error: 'Admin resource. Access denied'
-    });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (user.role !== 1) return res.status(401).json({ error: 'Admin resource. Access denied' });
+
     req.profile = user;
-    next();
-  });
-}
-
-exports.canUpdateDeleteBlog = (req, res, next) => {
-  const slug = req.params.slug.toLowerCase();
-  Blog.findOne({ slug }).exec((err, data) => {
-    if (err) return res.status(400).json({
-      error: errorHandler(err)
-    });
-
-    let isAuthorized = data.postedBy._id.toString() === req.profile._id.toString();
-
-    // user is authorized when the role is admin
-    if (req.profile.role === 1) isAuthorized = true;
-
-    if (!isAuthorized) return res.status(401).json({
-      error: 'You are not authorized to perform this action'
-    });
 
     next();
   });

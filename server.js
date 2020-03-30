@@ -9,6 +9,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 // bring routes
+const authRoutes = require('./routes/auth');
 const collectionRoutes = require('./routes/collection');
 const customerRoutes = require('./routes/customer');
 
@@ -37,6 +38,7 @@ app.use(cookieParser());
 app.use(cors());
 
 // routes middleware
+app.use(authRoutes);
 app.use(collectionRoutes);
 app.use(customerRoutes);
 

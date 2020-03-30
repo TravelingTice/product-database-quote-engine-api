@@ -1,5 +1,7 @@
 const formidable = require('formidable');
 const fs = require('fs');
+const _ = require('lodash');
+const slugify = require('slugify');
 
 const Customer = require('../models/customer');
 
@@ -46,19 +48,21 @@ exports.create = (req, res) => {
     customer.addedBy = req.user._id;
 
     // image upload
-    if (files.photo) {
-      if (files.photo.size > 10000000) return res.status(400).json({
+    if (files.businessCard) {
+      if (files.businessCard.size > 10000000) return res.status(400).json({
         error: 'Image should be less than 1mb in size'
       });
 
       // put image in blog object
-      customer.businessCard.data = fs.readFileSync(files.photo.path);
-      blog.businessCard.contentType = files.photo.type;
+      customer.businessCard.data = fs.readFileSync(files.businessCard.path);
+      customer.businessCard.contentType = files.businessCard.type;
     }
 
     // save blog post in the db
     customer.save((err, result) => {
       if (err) return res.status(400).json({ error: errorHandler(err) });
+
+      result.businessCard = undefined;
 
       return res.json(result);
     });
@@ -66,9 +70,58 @@ exports.create = (req, res) => {
 }
 
 exports.update = (req, res) => {
-  res.json({ todo: true });
+  const slug = req.params.slug.toLowerCase();
+
+  Customer.findOne({ slug, isDeleted: false }).exec((err, oldCustomer) => {
+    if (err) return res.status(400).json({ error: errorHandler(err) });
+
+    let form = new formidable.IncomingForm();
+    // .png keep .png etc
+    form.keepExtensions = true;
+    
+    // parse the form with req object (has form data)
+    form.parse(req, (err, fields, files) => {
+      if (err) return res.status(400).json({ error: 'Image could not upload' });
+
+      // if the blog title is updated, the slug should not be changed
+      let slugBeforeMerge = oldCustomer.slug;
+      const newCustomer = _.merge(oldCustomer, fields);
+      newCustomer.slug = slugBeforeMerge;
+  
+      const { name } = fields;
+  
+      // validate
+      if (!name) return res.status(400).json({ error: 'Name is required' });
+  
+      // image upload
+      if (files && files.photo) {
+        if (files.photo.size > 10000000) return res.status(400).json({
+          error: 'Image should be less than 1mb in size'
+        });
+  
+        // put image in blog object
+        newCustomer.businessCard.data = fs.readFileSync(files.photo.path);
+        newCustomer.businessCard.contentType = files.photo.type;
+      }
+  
+      // save newBlog post in the db
+      newCustomer.save((err, result) => {
+        if (err) return res.status(400).json({ error: errorHandler(err) });
+  
+        // send result without photo
+        result.businessCard = undefined;
+        res.json(result);
+      });
+    });
+  });
 }
 
 exports.remove = (req, res) => {
-  res.json({ todo: true });
+  const slug = req.params.slug.toLowerCase();
+
+  Customer.findOneAndRemove({ slug }, (err, result) => {
+    if (err) return res.status(400).json({ error: errorHandler(err) });
+
+    return res.json(result);
+  });
 }
