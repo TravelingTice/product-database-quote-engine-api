@@ -8,16 +8,32 @@ const Customer = require('../models/customer');
 const { errorHandler } = require('../helpers/dbErrorHandler');
 
 exports.list = (req, res) => {
-  Customer.find({ isDeleted: false }).exec((err, customers) => {
+  Customer.find({}).exec((err, customers) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     res.json(customers);
   });
 }
 
+exports.listFromUser = (req, res) => {
+  const userSlug = req.params.slug.toLowerCase();
+  // find user
+  User.findOne({ userSlug }, (err, user) => {
+    if (err) return res.status(400).json({ error: errorHandler(err) });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    Customer.find({ addedBy: user._id }).exec((err, customers) => {
+      if (err) return res.status(400).json({ error: errorHandler(err) });
+  
+      res.json(customers);
+    });
+  });
+}
+
 exports.read = (req, res) => {
   const slug = req.params.slug.toLowerCase();
-  Customer.findOne({ slug, isDeleted: false }).exec((err, customer) => {
+  Customer.findOne({ slug }).exec((err, customer) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     if (!customer) return res.status(404).json({ error: 'Customer not found' });
@@ -72,7 +88,7 @@ exports.create = (req, res) => {
 exports.update = (req, res) => {
   const slug = req.params.slug.toLowerCase();
 
-  Customer.findOne({ slug, isDeleted: false }).exec((err, oldCustomer) => {
+  Customer.findOne({ slug }).exec((err, oldCustomer) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     let form = new formidable.IncomingForm();
