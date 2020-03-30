@@ -6,7 +6,7 @@ const { errorHandler } = require('../helpers/dbErrorHandler');
 const Collection = require('../models/collection');
 
 exports.list = (req, res) => {
-  Collection.find({ isDeleted: false }).exec((err, collections) => {
+  Collection.find({ }).exec((err, collections) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     res.json(collections);
@@ -15,7 +15,7 @@ exports.list = (req, res) => {
 
 exports.read = (req, res) => {
   const slug = req.params.slug.toLowerCase();
-  Collection.findOne({ slug, isDeleted: false }).exec((err, collection) => {
+  Collection.findOne({ slug }).exec((err, collection) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     if (!collection) return res.status(404).json({ error: 'Collection not found' });
@@ -33,7 +33,7 @@ exports.create = (req, res) => {
   collection.slug = slug;
 
   // check if there is not already one in db
-  Collection.find({ slug, isDeleted: false }).exec((err, collections) => {
+  Collection.find({ slug }).exec((err, collections) => {
     if (collections.length > 0) return res.status(400).json({ error: 'Collection already exists' });
 
     // save in db
@@ -48,7 +48,7 @@ exports.create = (req, res) => {
 exports.update = (req, res) => {
   const slug = req.params.slug.toLowerCase();
 
-  Collection.findOne({ slug, isDeleted: false }).exec((err, oldCollection) => {
+  Collection.findOne({ slug }).exec((err, oldCollection) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     if (!oldCollection) return res.status(404).json({ error: 'Collection not found' });

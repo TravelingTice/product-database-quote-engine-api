@@ -54,13 +54,11 @@ exports.signup = (req, res) => {
     if (user) return res.status(400).json({ error: 'Email is already taken' });
 
     let username = shortId.generate();
-    let uniqueUsername = username;
-    let profile = `${process.env.CLIENT_URL}/profile/${uniqueUsername}`;
 
-    let newUser = new User({ name, email, password, profile, username, uniqueUsername });
+    let newUser = new User({ name, email, password, username });
     newUser.save((err, success) => {
       // error handling
-      if (err) return res.status(400).json({ error: errorHandler(err) });
+      if (err) return res.status(400).json({ error: err });
 
       // success
       return res.json({
@@ -87,9 +85,8 @@ exports.signup = (req, res) => {
 
 //     const username = shortId.generate();
 //     const uniqueUsername = username;
-//     const profile = `${process.env.CLIENT_URL}/profile/${uniqueUsername}`;
 
-//     const newUser = new User({ name, email, password, profile, username, uniqueUsername });
+//     const newUser = new User({ name, email, password, username, uniqueUsername });
 //     newUser.save((err, success) => {
 //       // error handling
 //       if (err) return res.status(400).json({ error: errorHandler(err) });
@@ -120,11 +117,11 @@ exports.signin = (req, res) => {
     // set the cookie in the response
     res.cookie('token', token, { expiresIn: '1d' });
   
-    const { _id, username, uniqueUsername, name, email, role } = user;
+    const { _id, username, name, email, role } = user;
     // respond with the token and the user
     return res.json({
       token,
-      user: { _id, username, uniqueUsername, name, email, role }
+      user: { _id, username, name, email, role }
     });
   });
 }

@@ -12,15 +12,6 @@ const userSchema = new mongoose.Schema({
     index: true,
     lowercase: true
   },
-  uniqueUsername: {
-    type: String,
-    trim: true,
-    required: true,
-    max: 32,
-    unique: true,
-    index: true,
-    lowercase: true
-  },
   name: {
     type: String,
     trim: true,
@@ -37,10 +28,6 @@ const userSchema = new mongoose.Schema({
   about: {
     type: String,
     default: ''
-  },
-  profile: {
-    type: String,
-    required: true,
   },
   hashed_password: {
     type: String,

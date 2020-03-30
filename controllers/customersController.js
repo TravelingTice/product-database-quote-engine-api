@@ -1,14 +1,16 @@
 const formidable = require('formidable');
 const fs = require('fs');
 const _ = require('lodash');
-const slugify = require('slugify');
+const emailValidator = require('email-validator');
 
 const Customer = require('../models/customer');
 
 const { errorHandler } = require('../helpers/dbErrorHandler');
 
 exports.list = (req, res) => {
-  Customer.find({}).exec((err, customers) => {
+  Customer.find({})
+  .select('-businessCard')
+  .exec((err, customers) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     res.json(customers);
@@ -16,9 +18,10 @@ exports.list = (req, res) => {
 }
 
 exports.listFromUser = (req, res) => {
-  const userSlug = req.params.slug.toLowerCase();
+  const userId = req.params.id.toLowerCase();
   // find user
-  User.findOne({ userSlug }, (err, user) => {
+  User.findOne({ _id: id })
+  .select('-businessCard').exec((err, user) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -32,8 +35,8 @@ exports.listFromUser = (req, res) => {
 }
 
 exports.read = (req, res) => {
-  const slug = req.params.slug.toLowerCase();
-  Customer.findOne({ slug }).exec((err, customer) => {
+  const id = req.params.id;
+  Customer.findOne({ _id: id }).exec((err, customer) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     if (!customer) return res.status(404).json({ error: 'Customer not found' });
@@ -51,44 +54,53 @@ exports.create = (req, res) => {
   form.parse(req, (err, fields, files) => {
     if (err) return res.status(400).json({ error: 'Image could not upload' });
 
-    const { name } = fields;
+    const { name, email } = fields;
 
-    if (!name) return res.status(400).json({ error: 'Name is required' });
+    // check if we already have a customer with this name
+    Customer.findOne({ name }, (err, customer) => {
+      if (customer) return res.status(400).json({ error: `Customer with name ${name} already exists` });
 
-    // create a new customer
-    const customer = new Customer({
-      ...fields
-    });
-
-    customer.slug = slugify(name).toLowerCase();
-    customer.addedBy = req.user._id;
-
-    // image upload
-    if (files.businessCard) {
-      if (files.businessCard.size > 10000000) return res.status(400).json({
-        error: 'Image should be less than 1mb in size'
+      // validations
+      if (!name) return res.status(400).json({ error: 'Name is required' });
+      if (!email) return res.status(400).json({ error: 'Email is required' });
+      if (!emailValidator.validate(email)) return res.status(400).json({ error: 'Has to be a valid email' });
+  
+      // create a new customer
+      const newCustomer = new Customer({
+        ...fields
+      });
+  
+      newCustomer.addedBy = req.user._id;
+  
+      // image upload
+      if (files.businessCard) {
+        if (files.businessCard.size > 10000000) return res.status(400).json({
+          error: 'Image should be less than 1mb in size'
+        });
+  
+        // put image in blog object
+        newCustomer.businessCard.data = fs.readFileSync(files.businessCard.path);
+        newCustomer.businessCard.contentType = files.businessCard.type;
+      }
+  
+      // save blog post in the db
+      newCustomer.save((err, result) => {
+        if (err) return res.status(400).json({ error: errorHandler(err) });
+  
+        result.businessCard = undefined;
+  
+        return res.json(result);
       });
 
-      // put image in blog object
-      customer.businessCard.data = fs.readFileSync(files.businessCard.path);
-      customer.businessCard.contentType = files.businessCard.type;
-    }
-
-    // save blog post in the db
-    customer.save((err, result) => {
-      if (err) return res.status(400).json({ error: errorHandler(err) });
-
-      result.businessCard = undefined;
-
-      return res.json(result);
     });
+
   });
 }
 
 exports.update = (req, res) => {
-  const slug = req.params.slug.toLowerCase();
+  const id = req.params.id.toLowerCase();
 
-  Customer.findOne({ slug }).exec((err, oldCustomer) => {
+  Customer.findOne({ _id: id }).exec((err, oldCustomer) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     let form = new formidable.IncomingForm();
@@ -99,19 +111,16 @@ exports.update = (req, res) => {
     form.parse(req, (err, fields, files) => {
       if (err) return res.status(400).json({ error: 'Image could not upload' });
 
-      // if the blog title is updated, the slug should not be changed
-      let slugBeforeMerge = oldCustomer.slug;
       const newCustomer = _.merge(oldCustomer, fields);
-      newCustomer.slug = slugBeforeMerge;
-  
-      const { name } = fields;
-  
+    
       // validate
-      if (!name) return res.status(400).json({ error: 'Name is required' });
+      if (!newCustomer.name) return res.status(400).json({ error: 'Name is required' });
+      if (!newCustomer.email) return res.status(400).json({ error: 'Email is required' });
+      if (!emailValidator.validate(newCustomer.email)) return res.status(400).json({ error: 'Has to be a valid email' });
   
       // image upload
-      if (files && files.photo) {
-        if (files.photo.size > 10000000) return res.status(400).json({
+      if (files && files.businessCard) {
+        if (files.businessCard.size > 10000000) return res.status(400).json({
           error: 'Image should be less than 1mb in size'
         });
   
@@ -133,9 +142,9 @@ exports.update = (req, res) => {
 }
 
 exports.remove = (req, res) => {
-  const slug = req.params.slug.toLowerCase();
+  const id = req.params.id;
 
-  Customer.findOneAndRemove({ slug }, (err, result) => {
+  Customer.findOneAndRemove({ _id: id }, (err, result) => {
     if (err) return res.status(400).json({ error: errorHandler(err) });
 
     return res.json(result);

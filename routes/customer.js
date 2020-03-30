@@ -5,10 +5,10 @@ const { list, read, create, update, remove, listFromUser } = require('../control
 const { requireSignin, authMiddleware, adminMiddleware } = require('../controllers/authController');
 
 router.get('/customers', list);
-router.get('/customers/:slug', read);
-router.get('/users/:slug/customers', listFromUser);
+router.get('/customers/:id', read);
+router.get('/users/:id/customers', listFromUser);
 router.post('/customers', requireSignin, authMiddleware, create);
-router.post('/customers/:slug', requireSignin, authMiddleware, update);
-router.delete('/customers/:slug', requireSignin, authMiddleware, remove);
+router.put('/customers/:id', requireSignin, authMiddleware, update);
+router.delete('/customers/:id', requireSignin, authMiddleware, remove);
 
 module.exports = router;
